@@ -1,4 +1,4 @@
-# İnme (Stroke) Tahmini — Keşifçi Veri Analizinden (EDA) Makine Öğrenmesine
+# İnme Tahmini — EDA'dan Makine Öğrenmesine
 
 Bu proje, [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset) veri seti üzerinde gerçekleştirilmiş uçtan uca bir makine öğrenmesi çalışmasıdır. Projenin ana odağı, körü körüne yüksek doğruluk (Accuracy) skoru peşinde koşmak değil; veri setindeki **ciddi sınıf dengesizliğini (~%5 pozitif inme oranı)** yönetmek ve bir klinisyenin veya uzmanın gerçekten işine yarayabilecek tahminler üretebilmektir.
 
@@ -29,3 +29,4 @@ Bu proje, [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesorian
 * Matplotlib & Seaborn
 * Scikit-Learn
 * Imbalanced-Learn (SMOTE)
+
