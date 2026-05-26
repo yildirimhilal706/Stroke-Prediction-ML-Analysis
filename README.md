@@ -1,32 +1,85 @@
-# İnme Tahmini — EDA'dan Makine Öğrenmesine
+# İnme (Stroke) Tahmin Modeli
 
-Bu proje, [Stroke Prediction Dataset](https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset) veri seti üzerinde gerçekleştirilmiş uçtan uca bir makine öğrenmesi çalışmasıdır. Projenin ana odağı, körü körüne yüksek doğruluk (Accuracy) skoru peşinde koşmak değil; veri setindeki **ciddi sınıf dengesizliğini (~%5 pozitif inme oranı)** yönetmek ve bir klinisyenin veya uzmanın gerçekten işine yarayabilecek tahminler üretebilmektir.
+Bu projede, kişilerin demografik ve sağlık verilerinden yola çıkarak inme (stroke) riski olup olmadığını tahmin eden bir makine öğrenmesi modeli geliştirildi. Veri seti **dengesiz** (yalnızca %4.87 pozitif vaka) olduğu için odak noktası yüksek doğruluk değil, **inme vakalarını kaçırmayan** bir model kurmaktı.
 
-## 🛠️ Proje İçeriği
+## Veri Seti
 
-1. **Klinik EDA (Keşifçi Veri Analizi)** — Özelliklerin dağılımları, Boxplot (Kutu Grafiği) ile inme risk faktörlerinin analizi ve sayısal/kategorik değişkenlerin inme durumu üzerindeki etkilerinin incelenmesi.
-2. **Sınıf Dengesizliği ile Mücadele** — Verideki dengesizliği çözmek adına sadece Eğitim (Train) verisine uygulanan **SMOTE (Synthetic Minority Over-sampling Technique)** yöntemi.
-3. **Model Eğitimi ve Optimizasyon Kıymeti** — Rastgele Orman (**Random Forest Classifier**) algoritmasının eğitimi, hiperparametre optimizasyonu (GridSearchCV) denemesi ve aşırı öğrenme (overfitting) analizleri.
-4. **Metrik Odaklı Değerlendirme** — Sağlık sektörüne uygun olarak Accuracy yerine **Recall (Duyarlılık)**, Precision (Kesinlik) ve Hata Matrisi (Confusion Matrix) odaklı final modeli seçimi.
+- **Kaynak:** Kaggle — Healthcare Stroke Dataset
+- **Boyut:** 5110 satır, 12 kolon (temizleme sonrası 5109 × 11)
+- **Hedef değişken:** `stroke` (0: yok, 1: var)
+- **Sınıf dağılımı:** 4861 negatif, 249 pozitif → **%95.13 / %4.87**
 
-## 📈 Önemli Bulgular ve Çıkarımlar
+Özellikler: `gender`, `age`, `hypertension`, `heart_disease`, `ever_married`, `work_type`, `Residence_type`, `avg_glucose_level`, `bmi`, `smoking_status`.
 
-- **Yaş En Güçlü Belirteçtir:** Hem yapılan EDA analizlerinde (inme geçirenlerin yaş medyanının 70+ olması) hem de eğitilen Random Forest modelinin Özellik Önem Derecesinde (Feature Importance) **Yaş (Age)** açık ara en dominant risk faktörü olarak çıkmıştır.
-- **Sınıf Dengesizliği Yönetimi Şarttır:** Standart Random Forest modeli, verideki sağlıklı kişilerin ezici çoğunluğundan dolayı inme vakalarının sadece **%16'sını** yakalayabilmiştir (Recall: 0.16). SMOTE entegrasyonu ile bu oran **%40'a (Recall: 0.40) çıkarılmıştır.**
-- **Metrik Dengesi (Trade-off):** Gerçek inme vakalarını daha çok yakalamaya başladığımızda (Recall artışı), modelimiz doğal olarak daha fazla kişiye "inme riski var" diyerek yanlış alarm (Precision düşüşü) vermeye başlamıştır. Sağlık projelerinde yanlış negatifler (hastayı kaçırmak), yanlış pozitiflerden (yanlış alarm) çok daha maliyetli olduğu için bu durum kabul edilmiştir.
+## İş Akışı
 
-## 💻 Projeyi Çalıştırma
+1. **Veri Temizleme**
+   - `bmi` kolonundaki 201 eksik değer medyan (28.1) ile dolduruldu
+   - `gender == 'Other'` olan tek satır çıkarıldı
+   - `id` kolonu düşürüldü
+2. **Keşifsel Veri Analizi (EDA)**
+   - Sayısal değişkenler için histogram ve istatistiki özet
+   - `age`, `avg_glucose_level`, `bmi` için stroke durumuna göre boxplot karşılaştırması
+   - Kategorik değişkenler için stroke kırılımlı countplot'lar
+   - Sayısal özellikler arası korelasyon ısı haritası
+3. **Ön İşleme**
+   - Kategorik değişkenler için One-Hot Encoding (`drop_first=True`)
+   - `train_test_split` ile %80/%20 stratified ayrım
+   - `StandardScaler` ile ölçeklendirme
+4. **Modelleme** — üç farklı yaklaşım denendi ve karşılaştırıldı
 
-### Kaggle Üzerinde
-1. Veri setinin Kaggle sayfasında yeni bir notebook açın.
-2. İndirdiğiniz `.ipynb` uzantılı analiz dosyasını yükleyin.
-3. Tüm hücreleri sırayla çalıştırın. `zipfile` ve yol kontrolleri otomatik olarak veriyi hafızaya alacaktır.
+## Denenen Modeller ve Sonuçlar
 
+Tüm modeller `RandomForestClassifier` üzerine kuruldu. Pozitif sınıfa (stroke = 1) ait metrikler:
 
-## 🚀 Kullanılan Teknolojiler
-* Python 3
-* Pandas & NumPy
-* Matplotlib & Seaborn
-* Scikit-Learn
-* Imbalanced-Learn (SMOTE)
+| Model | Precision (1) | Recall (1) | F1 (1) | Accuracy |
+|---|---|---|---|---|
+| Baseline (`class_weight='balanced_subsample'`) | 0.27 | 0.16 | 0.20 | 0.94 |
+| **SMOTE + Random Forest** | **0.13** | **0.40** | **0.20** | **0.86** |
+| SMOTE + GridSearchCV (recall odaklı) | 0.08 | 0.17 | 0.11 | 0.88 |
 
+**Final model olarak SMOTE'lu Random Forest seçildi.** Sebebi: sağlık uygulamalarında pozitif vakayı kaçırmamak (yüksek recall) yanlış alarm vermekten daha kritik. Grid Search recall'ı düşürdüğü için baseline SMOTE modeli korundu.
+
+### Final Model Hata Matrisi
+Tahmin: Yok   Tahmin: Var
+Gerçek: Yok        830           110
+Gerçek: Var         25            17
+
+Test setindeki 42 inme vakasının 17'si yakalandı, 25'i kaçırıldı.
+
+## Öne Çıkan Özellikler
+
+Modelin karar verirken en çok ağırlık verdiği değişkenler (feature importance):
+
+1. `age`
+2. `avg_glucose_level`
+3. `bmi`
+4. `hypertension` / `heart_disease`
+
+Bu, klinik beklentilerle uyumlu — yaş ve kan şekeri inme riskinin başlıca göstergeleri.
+
+## Kullanılan Kütüphaneler
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+imbalanced-learn  # SMOTE için
+
+## Çalıştırma
+
+```bash
+pip install pandas numpy matplotlib seaborn scikit-learn imbalanced-learn
+jupyter notebook notebook52d489b3c9__1_.ipynb
+```
+
+Notebook Kaggle ortamında çalıştırıldığı için veri yolu `/kaggle/input/...` şeklinde. Lokalde çalıştıracaksanız ilk hücredeki `pd.read_csv(...)` yolunu kendi CSV konumunuza göre güncelleyin.
+
+## Sonuç ve İyileştirme Önerileri
+
+Mevcut model dengesiz veri probleminde recall'ı `0.16`'dan `0.40`'a çıkarmayı başardı, ancak precision hâlâ düşük (`0.13`). Gerçek bir tarama aracı için aşağıdaki adımlar denenebilir:
+
+- XGBoost / LightGBM ile karşılaştırma
+- Threshold tuning (varsayılan 0.5 yerine recall-precision dengesi için optimize)
+- Daha fazla veri toplama, özellikle pozitif vaka sayısı
+- Daha derin EDA: yaşa göre stratifikasyon, etkileşim terimleri
